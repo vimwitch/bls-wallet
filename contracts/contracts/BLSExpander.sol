@@ -5,12 +5,14 @@ pragma abicoder v2;
 import "./VerificationGateway.sol";
 import "./interfaces/IWallet.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "zerocompress/contracts/interfaces/IDecompressReceiver.sol";
+import "zerocompress/contracts/Decompressor.sol";
 
 /**
 @dev Optimisations to reduce calldata of VerificationGateway multiCall
 with shared params.
 */
-contract BLSExpander {
+contract BLSExpander is IDecompressReceiver {
     VerificationGateway verificationGateway;
     constructor(address gateway) {
         verificationGateway = VerificationGateway(gateway);
@@ -32,6 +34,30 @@ contract BLSExpander {
         uint256 balanceAfter = tokenRewardAddress.balanceOf(tx.origin);
         balanceIncrease = balanceAfter - balanceBefore;
         require(balanceIncrease >= tokenRewardAmount, "BLSExpander: Insufficient reward");
+    }
+
+    function callMethod(uint8 method, bytes memory data) external override {
+      if (method == uint8(0)) {
+        // blsCallMultiSameCallerContractFunction
+        (
+          uint256[4] memory publicKey,
+          uint256 nonce,
+          uint256[2] memory signature,
+          address contractAddress,
+          bytes4 methodId,
+          bytes[] memory encodedParamSets
+        ) = abi.decode(data, (uint[4], uint, uint[2], address, bytes4, bytes[]));
+        this.blsCallMultiSameCallerContractFunction(
+          publicKey,
+          nonce,
+          signature,
+          contractAddress,
+          methodId,
+          encodedParamSets
+        );
+      } else {
+        revert('unknown function');
+      }
     }
 
 
@@ -91,12 +117,12 @@ contract BLSExpander {
 
     // eg airdrop
     function blsCallMultiSameCallerContractFunction(
-        uint256[4] calldata publicKey,
+        uint256[4] memory publicKey,
         uint256 nonce,
-        uint256[2] calldata signature,
+        uint256[2] memory signature,
         address contractAddress,
         bytes4 methodId,
-        bytes[] calldata encodedParamSets
+        bytes[] memory encodedParamSets
     ) external {
         uint256 length = encodedParamSets.length;
 

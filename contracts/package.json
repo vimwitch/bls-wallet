@@ -18,7 +18,8 @@
     "dotenv": "^10.0.0",
     "ethers": "^5.5.1",
     "hardhat": "^2.6.7",
-    "web3": "^1.7.0"
+    "web3": "^1.7.0",
+    "zerocompress": "^0.0.0"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-etherscan": "^2.1.3",

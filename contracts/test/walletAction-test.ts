@@ -3,6 +3,8 @@ import expectRevert from "../shared/helpers/expectRevert";
 
 import { ethers, network } from "hardhat";
 
+import { compressDouble, compressSingle } from "zerocompress";
+
 import Fixture from "../shared/helpers/Fixture";
 import TokenHelper from "../shared/helpers/TokenHelper";
 
@@ -262,10 +264,72 @@ describe("WalletActions", async function () {
       })),
     });
 
+    const _tx = await fx.blsExpander.blsCallMultiSameCallerContractFunction(
+      tx.senderPublicKeys[0],
+      nonce,
+      tx.signature,
+      testToken.address,
+      testToken.interface.getSighash("transfer"),
+      tx.operations[0].actions.map(
+        (action) =>
+          `0x${solidityPack(["bytes"], [action.encodedFunction]).slice(10)}`,
+      ),
+    );
+    console.log(_tx);
+    await _tx.wait();
+
+    for (let i = 0; i < wallets.length; i++) {
+      const walletBalance = await testToken.balanceOf(wallets[i].address);
+      expect(walletBalance).to.equal(th.userStartAmount);
+    }
+  });
+
+  it("should airdrop (multicall) (compression)", async function () {
+    const [user] = await ethers.getSigners();
+    th = new TokenHelper(fx);
+
+    const wallets = await fx.createBLSWallets();
+    const testToken = await TokenHelper.deployTestToken();
+
+    // send all to first address
+    const totalAmount = th.userStartAmount.mul(wallets.length);
     await (
-      await fx.blsExpander.blsCallMultiSameCallerContractFunction(
+      await testToken
+        .connect(fx.signers[0])
+        .transfer(wallets[0].address, totalAmount)
+    ).wait();
+
+    const nonce = await wallets[0].Nonce();
+
+    const tx = wallets[0].sign({
+      nonce,
+      actions: wallets.map((recvWallet) => ({
+        ethValue: BigNumber.from(0),
+        contractAddress: testToken.address,
+        encodedFunction: testToken.interface.encodeFunctionData("transfer", [
+          recvWallet.address,
+          th.userStartAmount.toString(),
+        ]),
+      })),
+    });
+
+    const Decompressor = await ethers.getContractFactory("Decompressor");
+    const decompressor = await Decompressor.deploy();
+    await decompressor.deployed();
+
+    await (
+      await decompressor.connect(user).registerReceiver(fx.blsExpander.address)
+    ).wait();
+    const receiverIndex = await decompressor.receiversByAddress(
+      fx.blsExpander.address,
+    );
+
+    const compressedData = compressSingle(
+      receiverIndex,
+      0,
+      [
         tx.senderPublicKeys[0],
-        nonce,
+        nonce.toString(),
         tx.signature,
         testToken.address,
         testToken.interface.getSighash("transfer"),
@@ -273,8 +337,14 @@ describe("WalletActions", async function () {
           (action) =>
             `0x${solidityPack(["bytes"], [action.encodedFunction]).slice(10)}`,
         ),
-      )
-    ).wait();
+      ],
+      ["uint[4]", "uint", "uint[2]", "address", "bytes4", "bytes[]"],
+    );
+    const _tx = await decompressor
+      .connect(user)
+      .decompressSingleBitCall(compressedData);
+    console.log(_tx);
+    await _tx.wait();
 
     for (let i = 0; i < wallets.length; i++) {
       const walletBalance = await testToken.balanceOf(wallets[i].address);
