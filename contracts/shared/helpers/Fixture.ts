@@ -76,6 +76,10 @@ export default class Fixture {
       ),
     )) as VerificationGateway;
 
+    const decompress = await create2Fixture.create2Contract(
+      "Decompress",
+    )
+
     // deploy BLSExpander Gateway
     const blsExpander = await create2Fixture.create2Contract(
       "BLSExpander",
@@ -83,6 +87,12 @@ export default class Fixture {
         ["address"],
         [verificationGateway.address],
       ),
+      BigNumber.from(0),
+      {
+        libraries: {
+          Decompress: decompress.address,
+        }
+      }
     );
 
     const BLSWallet = await ethers.getContractFactory("BLSWallet");

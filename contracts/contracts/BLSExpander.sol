@@ -5,14 +5,13 @@ pragma abicoder v2;
 import "./VerificationGateway.sol";
 import "./interfaces/IWallet.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "zerocompress/contracts/interfaces/IDecompressReceiver.sol";
 import "zerocompress/contracts/Decompressor.sol";
 
 /**
 @dev Optimisations to reduce calldata of VerificationGateway multiCall
 with shared params.
 */
-contract BLSExpander is IDecompressReceiver {
+contract BLSExpander is Decompressor {
     VerificationGateway verificationGateway;
     constructor(address gateway) {
         verificationGateway = VerificationGateway(gateway);
@@ -35,31 +34,6 @@ contract BLSExpander is IDecompressReceiver {
         balanceIncrease = balanceAfter - balanceBefore;
         require(balanceIncrease >= tokenRewardAmount, "BLSExpander: Insufficient reward");
     }
-
-    function callMethod(uint8 method, bytes memory data) external override {
-      if (method == uint8(0)) {
-        // blsCallMultiSameCallerContractFunction
-        (
-          uint256[4] memory publicKey,
-          uint256 nonce,
-          uint256[2] memory signature,
-          address contractAddress,
-          bytes4 methodId,
-          bytes[] memory encodedParamSets
-        ) = abi.decode(data, (uint[4], uint, uint[2], address, bytes4, bytes[]));
-        this.blsCallMultiSameCallerContractFunction(
-          publicKey,
-          nonce,
-          signature,
-          contractAddress,
-          methodId,
-          encodedParamSets
-        );
-      } else {
-        revert('unknown function');
-      }
-    }
-
 
     // eg approve and transfers of a token contract
     // function blsCallMultiSameContract(

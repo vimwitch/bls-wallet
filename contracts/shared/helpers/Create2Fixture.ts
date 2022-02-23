@@ -69,9 +69,10 @@ export default class Create2Fixture {
     contractName: string,
     constructorParamsBytes: string = "0x",
     salt: BigNumber = BigNumber.from(0),
+    options = {},
   ): Promise<Contract> {
     const create2Deployer = await deployerContract();
-    const factory = await ethers.getContractFactory(contractName);
+    const factory = await ethers.getContractFactory(contractName, options);
     const initCode = factory.bytecode + constructorParamsBytes.substr(2);
     const initCodeHash = ethers.utils.solidityKeccak256(["bytes"], [initCode]);
 

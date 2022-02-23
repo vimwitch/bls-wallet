@@ -313,20 +313,8 @@ describe("WalletActions", async function () {
       })),
     });
 
-    const Decompressor = await ethers.getContractFactory("Decompressor");
-    const decompressor = await Decompressor.deploy();
-    await decompressor.deployed();
-
-    await (
-      await decompressor.connect(user).registerReceiver(fx.blsExpander.address)
-    ).wait();
-    const receiverIndex = await decompressor.receiversByAddress(
-      fx.blsExpander.address,
-    );
-
-    const compressedData = compressSingle(
-      receiverIndex,
-      0,
+    const calldata = fx.blsExpander.interface.encodeFunctionData(
+      'blsCallMultiSameCallerContractFunction',
       [
         tx.senderPublicKeys[0],
         nonce.toString(),
@@ -337,12 +325,12 @@ describe("WalletActions", async function () {
           (action) =>
             `0x${solidityPack(["bytes"], [action.encodedFunction]).slice(10)}`,
         ),
-      ],
-      ["uint[4]", "uint", "uint[2]", "address", "bytes4", "bytes[]"],
-    );
-    const _tx = await decompressor
-      .connect(user)
-      .decompressSingleBitCall(compressedData);
+      ]
+    )
+
+    const [func, data] = compressSingle(calldata)
+    const _tx = await fx.blsExpander
+      .connect(user)[func](data)
     console.log(_tx);
     await _tx.wait();
 

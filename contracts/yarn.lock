@@ -10582,10 +10582,10 @@ yn@3.1.1:
   resolved "https://registry.npmjs.org/yn/-/yn-3.1.1.tgz"
   integrity sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==
 
-zerocompress@^0.0.0:
-  version "0.0.0"
-  resolved "https://registry.yarnpkg.com/zerocompress/-/zerocompress-0.0.0.tgz#71e99d09d1fd7ddd8188bfc55272b3d56b4302b8"
-  integrity sha512-RskliYkao4EF4OIJ8a3w7UaZ5CwtgLMmMJHpS6VnJYSkP1W6tT2PFubqenLTA5errRNFgUa9lUToAkxMpPCaAg==
+zerocompress@0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/zerocompress/-/zerocompress-0.1.0.tgz#ef46d8bc6bbbe41119d8d8ae7e7ec8d52e3f5deb"
+  integrity sha512-57z7x7rZpYZu0ivkqbTIEDfTEfHnflrjLxRhEH8KNRYqeyQ8fBhKodZmFpzjT9tZ5iWQAL/L/uP1iJ6Qrk8Vkw==
   dependencies:
     bn.js "^5.2.0"
     ethers "^5.5.4"
